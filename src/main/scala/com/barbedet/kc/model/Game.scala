@@ -63,13 +63,14 @@ object GameState {
     isLost: Boolean,
     firstLetter: Char,
     wordLength: Int,
-    revealedWord: Option[String]  // Le mot révélé si partie perdue
+    revealedWord: Option[String],  // Le mot révélé si partie perdue
+    debugWord: Option[String]       // Le mot à deviner (mode debug uniquement)
   )
 
   implicit val publicEncoder: Encoder[PublicGameState] = deriveEncoder
   implicit val publicDecoder: Decoder[PublicGameState] = deriveDecoder
 
-  def toPublic(state: GameState): PublicGameState = PublicGameState(
+  def toPublic(state: GameState, debugMode: Boolean = true): PublicGameState = PublicGameState(
     gameId = state.gameId,
     attempts = state.attempts,
     maxAttempts = state.maxAttempts,
@@ -77,7 +78,8 @@ object GameState {
     isLost = state.isLost,
     firstLetter = state.firstLetter,
     wordLength = state.wordToGuess.length,
-    revealedWord = if (state.isLost) Some(state.wordToGuess) else None
+    revealedWord = if (state.isLost) Some(state.wordToGuess) else None,
+    debugWord = if (debugMode) Some(state.wordToGuess) else None  // Mot visible en mode debug
   )
 }
 
@@ -86,4 +88,32 @@ case class GuessRequest(word: String)
 
 object GuessRequest {
   implicit val decoder: Decoder[GuessRequest] = deriveDecoder
+}
+
+/** Statistiques du joueur */
+case class PlayerStats(
+  currentStreak: Int,    // Série actuelle de victoires consécutives
+  bestStreak: Int        // Meilleur score de série
+)
+
+object PlayerStats {
+  implicit val encoder: Encoder[PlayerStats] = deriveEncoder
+  implicit val decoder: Decoder[PlayerStats] = deriveDecoder
+  
+  // Stats initiales
+  def empty: PlayerStats = PlayerStats(currentStreak = 0, bestStreak = 0)
+  
+  // Mettre à jour après une victoire
+  def recordWin(stats: PlayerStats): PlayerStats = {
+    val newStreak = stats.currentStreak + 1
+    PlayerStats(
+      currentStreak = newStreak,
+      bestStreak = math.max(newStreak, stats.bestStreak)
+    )
+  }
+  
+  // Réinitialiser après une défaite
+  def recordLoss(stats: PlayerStats): PlayerStats = {
+    stats.copy(currentStreak = 0)
+  }
 }
