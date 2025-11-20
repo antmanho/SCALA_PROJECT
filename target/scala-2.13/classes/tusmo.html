@@ -223,17 +223,7 @@
         }
 
         .debug-answer {
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px dashed #ff0000;
-            color: #ff6666;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: 700;
-            font-size: 1.1em;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            margin: 8px 0;
-            letter-spacing: 8px;
+              display: none;
         }
 
         .game-board {
@@ -365,7 +355,8 @@
         }
 
         .key.absent {
-            background: var(--absent);
+              background: #111;
+              color: #222;
         }
 
         .input-area {
@@ -822,6 +813,11 @@
                     const tile = document.createElement('div');
                     tile.className = 'tile';
                     tile.id = `tile-${i}-${j}`;
+                        // Première ligne, première lettre en vert
+                        if (i === 0 && j === 0) {
+                            tile.textContent = currentGame.firstLetter;
+                            tile.classList.add('correct');
+                        }
                     row.appendChild(tile);
                 }
                 
@@ -874,7 +870,15 @@
             const keys = document.querySelectorAll('.key');
             keys.forEach(key => {
                 if (key.textContent === char) {
-                    key.className = `key ${keyStates[char] || ''}`;
+                        key.className = `key ${keyStates[char] || ''}`;
+                        // Si la lettre est absente, a été utilisée, et n'est pas la première lettre
+                        if (keyStates[char] === 'absent' && char !== currentGame.firstLetter) {
+                            key.style.background = '#111';
+                            key.style.color = '#222';
+                        } else {
+                            key.style.background = '';
+                            key.style.color = '';
+                        }
                 }
             });
         }

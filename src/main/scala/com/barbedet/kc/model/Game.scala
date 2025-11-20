@@ -70,7 +70,7 @@ object GameState {
   implicit val publicEncoder: Encoder[PublicGameState] = deriveEncoder
   implicit val publicDecoder: Decoder[PublicGameState] = deriveDecoder
 
-  def toPublic(state: GameState, debugMode: Boolean = true): PublicGameState = PublicGameState(
+  def toPublic(state: GameState, debugMode: Boolean = false): PublicGameState = PublicGameState(
     gameId = state.gameId,
     attempts = state.attempts,
     maxAttempts = state.maxAttempts,

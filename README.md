@@ -2,13 +2,11 @@
 
 Un clone du jeu **Tusmo** (version française de Wordle) développé en Scala avec **http4s**, **Cats Effect** et **Circe**.Un clone du jeu **Tusmo** (version française de Wordle) développé en Scala avec **http4s**, **Cats Effect** et **Circe**.
 
----> Ce projet implémente un serveur HTTP en Scala avec Cats Effect incluant :
-
 >
 
 ## 🎯 Règles du jeu> **Logique métier** :
 
-**Tusmo** est un jeu de déduction de mots inspiré de Wordle, adapté pour le français.- **Sélection aléatoire** d'un mot français de 6 lettres
+**Tusmo** est un jeu de déduction de mots inspiré de Wordle, adapté pour le français.- **Sélection aléatoire** d'un mot français de n lettres
 
 - **Validation** des tentatives (longueur, première lettre, existence dans le dictionnaire)
 
@@ -1265,7 +1263,6 @@ Le serveur démarre sur **http://localhost:8080**
 ✅ Serveur TUSMO démarré sur http://localhost:8080
    🎯 Jeu TUSMO : http://localhost:8080
    📝 API Game  : http://localhost:8080/api/game
-   📨 API Msg   : http://localhost:8080/api/messages
 ```
 
 Pour arrêter le serveur : `Ctrl + C`
