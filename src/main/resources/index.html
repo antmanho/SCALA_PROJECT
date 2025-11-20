@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUSMO - Jeu de Mots</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --correct: #6aaa64;
+            --present: #c9b458;
+            --absent: #787c7e;
+            --empty: #3a3a3c;
+            --background: #121213;
+            --surface: #1e1f20;
+            --text: #ffffff;
+            --text-secondary: #818384;
+            --border: #3a3a3c;
+            --key-bg: #818384;
+        }
+
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .messages-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .messages-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-list::-webkit-scrollbar-track {
+            background: var(--background);
+            border-radius: 10px;
+        }
+
+        .messages-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .message-item {
+            background: var(--surface-light);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .message-id {
+            font-size: 0.8em;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .message-content {
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected {
+            background: var(--success);
+        }
+
+        .status-disconnected {
+            background: var(--danger);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .ws-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--background);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .ws-log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ws-log::-webkit-scrollbar-track {
+            background: var(--surface);
+            border-radius: 10px;
+        }
+
+        .ws-log::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .ws-log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .ws-log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .ws-log-time {
+            color: var(--text-secondary);
+            margin-right: 10px;
+        }
+
+        .ws-log-message {
+            color: var(--warning);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: var(--background);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .refresh-btn {
+            background: var(--surface-light);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💬 Messages App</h1>
+            <p class="subtitle">Serveur HTTP Scala avec http4s & Cats Effect</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalMessages">0</div>
+                <div class="stat-label">Messages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="wsStatus">
+                    <span class="status-indicator status-disconnected"></span>
+                </div>
+                <div class="stat-label">WebSocket</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Formulaire de création -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="icon">✍️</span>
+                    Nouveau Message
+                </h2>
+                <div id="createAlert"></div>
+                <form id="createForm">
+                    <div class="form-group">
+                        <label for="messageContent">Contenu du message</label>
+                        <textarea 
+                            id="messageContent" 
+                            placeholder="Écrivez votre message ici..."
+                            required
+                        ></textarea>
+                    </div>
+                    <button type="submit">📤 Envoyer le message</button>
+                </form>
+            </div>
+
+            <!-- Liste des messages -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="icon">📋</span>
+                    Liste des Messages
+                </h2>
+                <button class="refresh-btn" onclick="loadMessages()">🔄 Actualiser</button>
+                <div id="messagesList" class="messages-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Aucun message pour le moment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WebSocket -->
+        <div class="card">
+            <h2 class="card-title">
+                <span class="icon">🔌</span>
+                WebSocket Echo
+                <span id="wsStatusText" style="margin-left: auto; font-size: 0.8em; color: var(--text-secondary);">
+                    Déconnecté
+                </span>
+            </h2>
+            <button id="wsToggle" onclick="toggleWebSocket()">▶️ Connecter au WebSocket</button>
+            <div class="ws-log" id="wsLog">
+                <div style="color: var(--text-secondary); text-align: center; padding: 20px;">
+                    Cliquez sur "Connecter" pour démarrer...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api';
+        const WS_URL = 'ws://localhost:8080/ws/echo';
+        
+        let ws = null;
+        let wsConnected = false;
+
+        // Charger les messages au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMessages();
+        });
+
+        // Créer un message
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const content = document.getElementById('messageContent').value.trim();
+            const alertDiv = document.getElementById('createAlert');
+            
+            if (!content) {
+                showAlert(alertDiv, 'Le message ne peut pas être vide', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content })
+                });
+
+                if (response.ok) {
+                    const newMessage = await response.json();
+                    showAlert(alertDiv, `✅ Message #${newMessage.id} créé avec succès!`, 'success');
+                    document.getElementById('messageContent').value = '';
+                    loadMessages();
+                } else {
+                    showAlert(alertDiv, '❌ Erreur lors de la création du message', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, `❌ Erreur: ${error.message}`, 'error');
+            }
+        });
+
+        // Charger tous les messages
+        async function loadMessages() {
+            try {
+                const response = await fetch(`${API_URL}/messages`);
+                const messages = await response.json();
+                
+                const messagesList = document.getElementById('messagesList');
+                document.getElementById('totalMessages').textContent = messages.length;
+                
+                if (messages.length === 0) {
+                    messagesList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>Aucun message pour le moment</p>
+                        </div>
+                    `;
+                } else {
+                    messagesList.innerHTML = messages
+                        .sort((a, b) => b.id - a.id)
+                        .map(msg => `
+                            <div class="message-item">
+                                <div class="message-id">Message #${msg.id}</div>
+                                <div class="message-content">${escapeHtml(msg.content)}</div>
+                            </div>
+                        `).join('');
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des messages:', error);
+                document.getElementById('messagesList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Impossible de charger les messages</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">Le serveur est-il démarré?</p>
+                    </div>
+                `;
+            }
+        }
+
+        // WebSocket
+        function toggleWebSocket() {
+            if (wsConnected) {
+                disconnectWebSocket();
+            } else {
+                connectWebSocket();
+            }
+        }
+
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket(WS_URL);
+                
+                ws.onopen = () => {
+                    wsConnected = true;
+                    updateWSStatus(true);
+                    addWSLog('✅ Connecté au WebSocket');
+                    document.getElementById('wsToggle').textContent = '⏸️ Déconnecter';
+                };
+
+                ws.onmessage = (event) => {
+                    addWSLog(`📨 Reçu: ${event.data}`);
+                };
+
+                ws.onerror = (error) => {
+                    addWSLog('❌ Erreur WebSocket');
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = () => {
+                    wsConnected = false;
+                    updateWSStatus(false);
+                    addWSLog('🔴 Déconnecté du WebSocket');
+                    document.getElementById('wsToggle').textContent = '▶️ Connecter au WebSocket';
+                };
+            } catch (error) {
+                addWSLog(`❌ Erreur: ${error.message}`);
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function updateWSStatus(connected) {
+            const statusIndicator = document.querySelector('#wsStatus .status-indicator');
+            const statusText = document.getElementById('wsStatusText');
+            
+            if (connected) {
+                statusIndicator.className = 'status-indicator status-connected';
+                statusText.textContent = 'Connecté';
+                statusText.style.color = 'var(--success)';
+            } else {
+                statusIndicator.className = 'status-indicator status-disconnected';
+                statusText.textContent = 'Déconnecté';
+                statusText.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function addWSLog(message) {
+            const wsLog = document.getElementById('wsLog');
+            const time = new Date().toLocaleTimeString();
+            
+            const entry = document.createElement('div');
+            entry.className = 'ws-log-entry';
+            entry.innerHTML = `
+                <span class="ws-log-time">[${time}]</span>
+                <span class="ws-log-message">${escapeHtml(message)}</span>
+            `;
+            
+            if (wsLog.querySelector('.empty-state, div[style*="text-align: center"]')) {
+                wsLog.innerHTML = '';
+            }
+            
+            wsLog.appendChild(entry);
+            wsLog.scrollTop = wsLog.scrollHeight;
+        }
+
+        function showAlert(container, message, type) {
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-refresh toutes les 30 secondes
+        setInterval(loadMessages, 30000);
+    </script>
+</body>
+</html>

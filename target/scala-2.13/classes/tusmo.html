@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUSMO - Jeu de Mots</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --correct: #6aaa64;
+            --present: #c9b458;
+            --absent: #787c7e;
+            --empty: #3a3a3c;
+            --background: #121213;
+            --surface: #1e1f20;
+            --text: #ffffff;
+            --text-secondary: #818384;
+            --border: #3a3a3c;
+            --key-bg: #818384;
+        }
+
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        header {
+            width: 100%;
+            text-align: center;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-top: 2px;
+            font-size: 0.7em;
+        }
+        
+        .header-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 6px 12px;
+            font-size: 0.7em;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .header-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 6px;
+            background: var(--surface);
+            border-radius: 6px;
+            font-size: 0.75em;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-size: 1em;
+            font-weight: 700;
+        }
+
+        .hint {
+            background: var(--correct);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.75em;
+        }
+
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin: 3px 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+        }
+
+        .tile {
+            width: 42px;
+            height: 42px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: var(--empty);
+            transition: all 0.3s ease;
+        }
+
+        .tile.correct {
+            background: var(--correct);
+            border-color: var(--correct);
+            animation: flip 0.5s ease;
+        }
+
+        .tile.present {
+            background: var(--present);
+            border-color: var(--present);
+            animation: flip 0.5s ease;
+        }
+
+        .tile.absent {
+            background: var(--absent);
+            border-color: var(--absent);
+            animation: flip 0.5s ease;
+        }
+
+        .tile.filled {
+            border-color: var(--text-secondary);
+            animation: pop 0.1s ease;
+        }
+
+        @keyframes flip {
+            0% {
+                transform: rotateX(0);
+            }
+            50% {
+                transform: rotateX(90deg);
+            }
+            100% {
+                transform: rotateX(0);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .keyboard {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-top: 3px;
+            margin-bottom: 5px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+        }
+
+        .key {
+            min-width: 28px;
+            height: 40px;
+            border-radius: 3px;
+            background: var(--key-bg);
+            color: white;
+            font-weight: 700;
+            font-size: 0.65em;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            transition: all 0.1s ease;
+            flex: 1;
+        }
+
+        .key:hover {
+            filter: brightness(1.2);
+        }
+
+        .key:active {
+            transform: scale(0.95);
+        }
+
+        .key.wide {
+            min-width: 45px;
+        }
+
+        .key.correct {
+            background: var(--correct);
+        }
+
+        .key.present {
+            background: var(--present);
+        }
+
+        .key.absent {
+            background: var(--absent);
+        }
+
+        .input-area {
+            width: 100%;
+            display: flex;
+            gap: 6px;
+            margin: 3px 0;
+        }
+
+        input {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.9em;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            color: var(--text);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--text-secondary);
+        }
+
+        button {
+            padding: 8px 16px;
+            font-size: 0.75em;
+            font-weight: 700;
+            background: var(--correct);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 6px 12px;
+            border-radius: 5px;
+            margin: 3px 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75em;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: var(--correct);
+            color: white;
+        }
+
+        .message.error {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .message.info {
+            background: var(--present);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 400px;
+            text-align: center;
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .modal p {
+            font-size: 1.1em;
+            margin: 10px 0;
+            color: var(--text-secondary);
+        }
+
+        .modal .word-reveal {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--correct);
+            margin: 20px 0;
+            letter-spacing: 0.1em;
+        }
+
+        .modal button {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .tile {
+                width: 38px;
+                height: 38px;
+                font-size: 1.1em;
+            }
+
+            .key {
+                min-width: 24px;
+                height: 36px;
+                font-size: 0.6em;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+            
+            .header-btn {
+                font-size: 0.65em;
+                padding: 5px 10px;
+            }
+            
+            .container {
+                padding: 5px;
+                gap: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎯 TUSMO</h1>
+        <p class="subtitle">Devinez le mot en 6 essais maximum</p>
+        <button class="header-btn" onclick="startNewGame()">
+            🎮 Nouveau
+        </button>
+    </header>
+
+    <div class="container">
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">Essais</div>
+                <div class="info-value" id="attempts">0/6</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Longueur</div>
+                <div class="info-value" id="wordLength">-</div>
+            </div>
+        </div>
+
+        <div class="hint" id="hint">
+            Première lettre : <strong>-</strong>
+        </div>
+
+        <div id="message"></div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Grille générée dynamiquement -->
+        </div>
+
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="wordInput" 
+                placeholder="Votre mot..."
+                maxlength="10"
+                autocomplete="off"
+            >
+            <button onclick="submitGuess()" id="submitBtn">
+                Valider
+            </button>
+        </div>
+
+        <div class="keyboard">
+            <div class="keyboard-row">
+                <div class="key" onclick="typeKey('A')">A</div>
+                <div class="key" onclick="typeKey('Z')">Z</div>
+                <div class="key" onclick="typeKey('E')">E</div>
+                <div class="key" onclick="typeKey('R')">R</div>
+                <div class="key" onclick="typeKey('T')">T</div>
+                <div class="key" onclick="typeKey('Y')">Y</div>
+                <div class="key" onclick="typeKey('U')">U</div>
+                <div class="key" onclick="typeKey('I')">I</div>
+                <div class="key" onclick="typeKey('O')">O</div>
+                <div class="key" onclick="typeKey('P')">P</div>
+            </div>
+            <div class="keyboard-row">
+                <div class="key" onclick="typeKey('Q')">Q</div>
+                <div class="key" onclick="typeKey('S')">S</div>
+                <div class="key" onclick="typeKey('D')">D</div>
+                <div class="key" onclick="typeKey('F')">F</div>
+                <div class="key" onclick="typeKey('G')">G</div>
+                <div class="key" onclick="typeKey('H')">H</div>
+                <div class="key" onclick="typeKey('J')">J</div>
+                <div class="key" onclick="typeKey('K')">K</div>
+                <div class="key" onclick="typeKey('L')">L</div>
+                <div class="key" onclick="typeKey('M')">M</div>
+            </div>
+            <div class="keyboard-row">
+                <div class="key wide" onclick="typeKey('ENTER')">⏎</div>
+                <div class="key" onclick="typeKey('W')">W</div>
+                <div class="key" onclick="typeKey('X')">X</div>
+                <div class="key" onclick="typeKey('C')">C</div>
+                <div class="key" onclick="typeKey('V')">V</div>
+                <div class="key" onclick="typeKey('B')">B</div>
+                <div class="key" onclick="typeKey('N')">N</div>
+                <div class="key wide" onclick="typeKey('BACKSPACE')">⌫</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="endModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">🎉</h2>
+            <p id="modalMessage"></p>
+            <p class="word-reveal" id="modalWord"></p>
+            <button onclick="closeModalAndNewGame()">
+                🎮 Rejouer
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/game';
+        let currentGame = null;
+        let currentRow = 0;
+        let currentInput = '';
+        let keyStates = {};
+
+        // Initialiser au chargement
+        document.addEventListener('DOMContentLoaded', () => {
+            startNewGame();
+            
+            // Gérer le clavier physique - seulement pour Enter
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitGuess();
+                }
+            });
+        });
+
+        function typeKey(key) {
+            const input = document.getElementById('wordInput');
+            
+            if (key === 'ENTER') {
+                submitGuess();
+            } else if (key === 'BACKSPACE') {
+                input.value = input.value.slice(0, -1);
+            } else if (key.length === 1) {
+                if (input.value.length < (currentGame?.wordLength || 10)) {
+                    input.value += key;
+                }
+            }
+        }
+
+        async function startNewGame() {
+            try {
+                showMessage('Démarrage d\'une nouvelle partie...', 'info');
+                
+                const response = await fetch(`${API_URL}/new`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    currentGame = await response.json();
+                    currentRow = 0;
+                    currentInput = '';
+                    keyStates = {};
+                    
+                    document.getElementById('wordInput').value = '';
+                    document.getElementById('wordInput').disabled = false;
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('wordInput').maxLength = currentGame.wordLength;
+                    
+                    updateGameDisplay();
+                    createGameBoard();
+                    clearMessage();
+                } else {
+                    showMessage('Erreur lors de la création de la partie', 'error');
+                }
+            } catch (error) {
+                showMessage('Impossible de se connecter au serveur. Est-il démarré ?', 'error');
+            }
+        }
+
+        function createGameBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            for (let i = 0; i < currentGame.maxAttempts; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                
+                for (let j = 0; j < currentGame.wordLength; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.id = `tile-${i}-${j}`;
+                    row.appendChild(tile);
+                }
+                
+                board.appendChild(row);
+            }
+
+            // Afficher les tentatives existantes
+            currentGame.attempts.forEach((attempt, rowIndex) => {
+                displayAttempt(attempt, rowIndex);
+            });
+        }
+
+        function updateGameDisplay() {
+            document.getElementById('attempts').textContent = 
+                `${currentGame.attempts.length}/${currentGame.maxAttempts}`;
+            document.getElementById('wordLength').textContent = currentGame.wordLength;
+            document.getElementById('hint').innerHTML = 
+                `Première lettre : <strong>${currentGame.firstLetter}</strong>`;
+        }
+
+        function displayAttempt(attempt, rowIndex) {
+            attempt.letters.forEach((letter, colIndex) => {
+                const tile = document.getElementById(`tile-${rowIndex}-${colIndex}`);
+                if (tile) {
+                    tile.textContent = letter.char;
+                    tile.classList.add(letter.state);
+                    
+                    // Mettre à jour le clavier
+                    updateKeyState(letter.char, letter.state);
+                }
+            });
+        }
+
+        function updateKeyState(char, state) {
+            const currentState = keyStates[char];
+            
+            // Ordre de priorité : correct > present > absent
+            if (state === 'correct' || 
+                (state === 'present' && currentState !== 'correct') ||
+                (state === 'absent' && !currentState)) {
+                keyStates[char] = state;
+            }
+
+            // Appliquer au clavier visuel
+            const keys = document.querySelectorAll('.key');
+            keys.forEach(key => {
+                if (key.textContent === char) {
+                    key.className = `key ${keyStates[char] || ''}`;
+                }
+            });
+        }
+
+        async function submitGuess() {
+            const input = document.getElementById('wordInput');
+            const word = input.value.trim().toUpperCase();
+
+            if (!currentGame) {
+                showMessage('Aucune partie en cours', 'error');
+                return;
+            }
+
+            if (currentGame.isWon || currentGame.isLost) {
+                showMessage('Cette partie est terminée', 'info');
+                return;
+            }
+
+            if (word.length !== currentGame.wordLength) {
+                showMessage(`Le mot doit contenir ${currentGame.wordLength} lettres`, 'error');
+                return;
+            }
+
+            if (!word.startsWith(currentGame.firstLetter)) {
+                showMessage(`Le mot doit commencer par ${currentGame.firstLetter}`, 'error');
+                return;
+            }
+
+            try {
+                showMessage('Vérification du mot...', 'info');
+                
+                const response = await fetch(`${API_URL}/${currentGame.gameId}/guess`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ word })
+                });
+
+                if (response.ok) {
+                    currentGame = await response.json();
+                    input.value = '';
+                    
+                    updateGameDisplay();
+                    createGameBoard();
+                    clearMessage();
+
+                    if (currentGame.isWon) {
+                        showEndModal(true);
+                    } else if (currentGame.isLost) {
+                        showEndModal(false);
+                    }
+                } else {
+                    const error = await response.json();
+                    console.error('Erreur API:', error);
+                    showMessage(error.error || 'Erreur inconnue', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('Erreur de connexion au serveur', 'error');
+            }
+        }
+
+        function showEndModal(won) {
+            const modal = document.getElementById('endModal');
+            const title = document.getElementById('modalTitle');
+            const message = document.getElementById('modalMessage');
+            const word = document.getElementById('modalWord');
+
+            if (won) {
+                title.textContent = '🎉 Bravo !';
+                message.textContent = `Vous avez trouvé le mot en ${currentGame.attempts.length} essai(s) !`;
+                word.textContent = '';
+            } else {
+                title.textContent = '😢 Perdu !';
+                message.textContent = 'Vous avez épuisé vos essais...';
+                // Afficher le mot si révélé par le serveur
+                if (currentGame.revealedWord) {
+                    word.textContent = currentGame.revealedWord;
+                } else {
+                    word.textContent = '???';
+                }
+            }
+
+            document.getElementById('wordInput').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            
+            modal.classList.add('show');
+        }
+
+        function closeModalAndNewGame() {
+            document.getElementById('endModal').classList.remove('show');
+            startNewGame();
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+        }
+
+        function clearMessage() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = '';
+            messageDiv.textContent = '';
+        }
+    </script>
+</body>
+</html>

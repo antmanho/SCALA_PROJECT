@@ -3,6 +3,7 @@
 Un clone du jeu **Tusmo** (version française de Wordle) développé en Scala avec **http4s**, **Cats Effect** et **Circe**.
 
 > Ce projet implémente un serveur HTTP en Scala avec Cats Effect incluant :
+>
 > - ✅ API REST complète (GET, POST)
 > - ✅ WebSocket pour communication temps réel
 > - ✅ Stockage en mémoire (sans base de données)
@@ -72,6 +73,7 @@ Le projet suit une **architecture fonctionnelle** avec les principes suivants :
 ## 🛠️ Technologies
 
 ### Backend
+
 - **Scala 2.13.12** - Langage fonctionnel sur JVM
 - **Cats Effect** - Gestion d'effets et IO monad
 - **http4s 0.23.23** - Framework HTTP fonctionnel
@@ -82,12 +84,14 @@ Le projet suit une **architecture fonctionnelle** avec les principes suivants :
 - **SBT 1.9.8** - Build tool
 
 ### Frontend
+
 - **HTML5 + CSS3** - Interface utilisateur
 - **JavaScript (Vanilla)** - Logique client
 - **Fetch API** - Requêtes HTTP
 - **WebSocket API** - Communication temps réel
 
 ### Données
+
 - **Dictionnaire Gutenberg** - 336 527 mots français
 - **Stockage en mémoire** - Aucune base de données via `Ref[IO, Map[...]]`
 
@@ -129,6 +133,7 @@ scala-http-kc/
 **Rôle** : Initialise et orchestre tous les composants de l'application.
 
 **Responsabilités** :
+
 - Créer les **références d'état** (`Ref`) pour stocker les données en mémoire
   - `gamesRef` : Map des parties Tusmo en cours
   - `messagesRef` : Map des messages WebSocket
@@ -160,13 +165,14 @@ Router(
 
 **Endpoints** :
 
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| `POST` | `/api/game/new` | Crée une nouvelle partie avec un mot aléatoire |
-| `GET` | `/api/game/:id` | Récupère l'état d'une partie existante |
-| `POST` | `/api/game/:id/guess` | Soumet une tentative et obtient l'évaluation |
+| Méthode | Route                 | Description                                    |
+| ------- | --------------------- | ---------------------------------------------- |
+| `POST`  | `/api/game/new`       | Crée une nouvelle partie avec un mot aléatoire |
+| `GET`   | `/api/game/:id`       | Récupère l'état d'une partie existante         |
+| `POST`  | `/api/game/:id/guess` | Soumet une tentative et obtient l'évaluation   |
 
 **Logique métier** :
+
 - **Sélection aléatoire** d'un mot français de 6 lettres
 - **Validation** des tentatives (longueur, première lettre, existence dans le dictionnaire)
 - **Évaluation** des lettres (Correct ✅ / Présent 🟡 / Absent ❌)
@@ -174,6 +180,7 @@ Router(
 - **Révélation du mot** en cas de défaite
 
 **Exemple d'évaluation** :
+
 ```scala
 def evaluateGuess(guess: String, target: String): Attempt = {
   // Compare chaque lettre et retourne : Correct / Present / Absent
@@ -196,12 +203,14 @@ def evaluateGuess(guess: String, target: String): Attempt = {
 **Endpoint** : `WS /ws/echo`
 
 **Fonctionnalités** :
+
 - **Connexion persistante** entre client et serveur
 - **Echo des messages** : Renvoie les messages reçus au client
 - **Stockage des messages** dans `messagesRef` pour historique
 - **Ping automatique** (désactivé actuellement pour éviter les messages intempestifs)
 
 **Cas d'usage** (potentiels) :
+
 - 💬 Chat en direct entre joueurs
 - 📊 Notifications de parties en cours
 - 🔔 Alertes de nouveaux records
@@ -227,20 +236,21 @@ Client                          Server
 ```
 
 **Code simplifié** :
+
 ```scala
 def routes(ws: WebSocketBuilder2[IO]): HttpRoutes[IO] = {
   case GET -> Root / "echo" =>
-    val receive: Pipe[IO, WebSocketFrame, Unit] = 
+    val receive: Pipe[IO, WebSocketFrame, Unit] =
       _.collect { case Text(msg, _) => msg }
-       .evalMap { text => 
+       .evalMap { text =>
          // Traiter et stocker le message
          storeMessage(text)
        }
-    
-    val send: Stream[IO, WebSocketFrame] = 
+
+    val send: Stream[IO, WebSocketFrame] =
       // Envoyer des messages au client
       messagesStream.map(msg => Text(msg.asJson.noSpaces))
-    
+
     ws.build(send, receive)
 }
 ```
@@ -254,11 +264,13 @@ def routes(ws: WebSocketBuilder2[IO]): HttpRoutes[IO] = {
 **Rôle** : Valide si un mot existe en français en utilisant le dictionnaire Gutenberg.
 
 **Dictionnaire** :
+
 - **336 527 mots français** extraits du projet Gutenberg
 - Chargé **une seule fois** au démarrage (lazy val)
 - Stocké dans un `Set[String]` pour recherche O(1)
 
 **Méthode principale** :
+
 ```scala
 def isValidFrenchWord(word: String): IO[Boolean] = {
   val normalizedWord = word.toLowerCase.trim
@@ -268,6 +280,7 @@ def isValidFrenchWord(word: String): IO[Boolean] = {
 ```
 
 **Avantages** :
+
 - ✅ Validation **instantanée** (pas de latence réseau)
 - ✅ **100% fiable** (pas de dépendance externe)
 - ✅ Couvre **tous les mots courants** du français
@@ -279,6 +292,7 @@ def isValidFrenchWord(word: String): IO[Boolean] = {
 **Rôle** : API REST complémentaire pour gérer les messages (historique WebSocket).
 
 **Endpoints** :
+
 - `GET /api/messages` - Liste tous les messages
 - `GET /api/messages/:id` - Récupère un message spécifique
 - `POST /api/messages` - Crée un nouveau message
@@ -290,6 +304,7 @@ def isValidFrenchWord(word: String): IO[Boolean] = {
 **Rôle** : Sert les fichiers statiques (HTML, CSS, JS) depuis `src/main/resources/`.
 
 **Routes** :
+
 - `GET /` → Redirige vers `/tusmo.html`
 - `GET /tusmo.html` → Interface du jeu
 
@@ -300,74 +315,125 @@ def isValidFrenchWord(word: String): IO[Boolean] = {
 **Rôle** : Ajoute les headers CORS pour permettre les requêtes cross-origin.
 
 **Headers** :
+
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS`
 - `Access-Control-Allow-Headers: Content-Type, Authorization`
 
-## 2. API exposée
+---
 
-### Ressource `Message`
+## 🌐 API REST
 
-Un `Message` est défini par :
+### API Tusmo - Jeu de mots
 
-```json
+#### Créer une partie
+
+```http
+POST /api/game/new
+Content-Type: application/json
+
+Response 201:
 {
-  "id": 1,
-  "content": "Bonjour"
+  "gameId": "b9a4e483-a904-4ffd-8858-502304ad43c3",
+  "firstLetter": "M",
+  "attempts": [],
+  "maxAttempts": 6,
+  "isWon": false,
+  "isLost": false
 }
 ```
 
-### Endpoints REST
+#### Soumettre une tentative
 
-Tous les endpoints sont préfixés par `/api`.
+```http
+POST /api/game/:id/guess
+Content-Type: application/json
 
-#### 2.1. GET /api/messages
+{
+  "word": "MAISON"
+}
+
+Response 200:
+{
+  "firstLetter": "M",
+  "attempts": [
+    {
+      "word": "MAISON",
+      "letters": [
+        { "char": "M", "state": "CORRECT" },
+        { "char": "A", "state": "PRESENT" },
+        { "char": "I", "state": "ABSENT" },
+        { "char": "S", "state": "ABSENT" },
+        { "char": "O", "state": "PRESENT" },
+        { "char": "N", "state": "CORRECT" }
+      ]
+    }
+  ],
+  "maxAttempts": 6,
+  "isWon": false,
+  "isLost": false
+}
+```
+
+#### Récupérer une partie
+
+```http
+GET /api/game/:id
+
+Response 200:
+{
+  "firstLetter": "M",
+  "attempts": [...],
+  "maxAttempts": 6,
+  "isWon": false,
+  "isLost": false,
+  "revealedWord": "MOUTON"  // Seulement si isLost = true
+}
+```
+
+### API Messages - Historique
+
+#### GET /api/messages
 
 Retourne la liste complète des messages en mémoire.
 
-- Méthode : `GET`
-- URL : `http://localhost:8080/api/messages`
-- Réponse 200 (exemple) :
+```http
+GET /api/messages
 
-```json
+Response 200:
 [
   { "id": 1, "content": "Hello" },
   { "id": 2, "content": "World" }
 ]
 ```
 
-#### 2.2. GET /api/messages/:id
+#### GET /api/messages/:id
 
 Retourne un message par son identifiant.
 
-- Méthode : `GET`
-- URL : `http://localhost:8080/api/messages/1`
-- Réponses :
-  - `200 OK` + JSON du message
-  - `404 Not Found` si l'id n'existe pas, par ex. :
+```http
+GET /api/messages/1
 
-```json
+Response 200:
+{ "id": 1, "content": "Hello" }
+
+Response 404 (si inexistant):
 { "error": "Message 42 not found" }
 ```
 
-#### 2.3. POST /api/messages
+#### POST /api/messages
 
 Crée un nouveau message.
 
-- Méthode : `POST`
-- URL : `http://localhost:8080/api/messages`
-- Headers : `Content-Type: application/json`
-- Body JSON :
+```http
+POST /api/messages
+Content-Type: application/json
 
-```json
 {
   "content": "Mon premier message"
 }
-```
 
-- Réponse 201 Created :
-
-```json
+Response 201:
 {
   "id": 1,
   "content": "Mon premier message"
@@ -376,98 +442,358 @@ Crée un nouveau message.
 
 L'identifiant est généré en mémoire (compteur monotone).
 
-### Endpoint WebSocket (bonus)
+---
 
-- URL : `ws://localhost:8080/ws/echo`
-- Comportement :
-  - Le serveur envoie `"tick"` toutes les secondes au client.
-  - Tout message texte envoyé par le client est loggé côté serveur.
+## 🔌 WebSocket
 
-Exemple de test avec `wscat` :
+### Connexion
+
+La WebSocket permet une **communication bidirectionnelle temps réel** entre le client et le serveur.
+
+**Endpoint** : `ws://localhost:8080/ws/echo`
+
+### Utilisation avec JavaScript
+
+```javascript
+const ws = new WebSocket("ws://localhost:8080/ws/echo");
+
+ws.onopen = () => {
+  console.log("✅ WebSocket connecté");
+};
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log("📨 Message reçu:", message);
+};
+
+ws.onerror = (error) => {
+  console.error("❌ Erreur WebSocket:", error);
+};
+
+ws.onclose = () => {
+  console.log("🔌 WebSocket fermé");
+};
+
+// Envoyer un message
+ws.send(JSON.stringify({ text: "Hello from client!" }));
+```
+
+### Format des messages
+
+**Client → Serveur** :
+
+```json
+{
+  "text": "Contenu du message",
+  "sender": "Nom de l'utilisateur"
+}
+```
+
+**Serveur → Client** (echo) :
+
+```json
+{
+  "id": 1,
+  "text": "Contenu du message",
+  "sender": "Nom de l'utilisateur",
+  "timestamp": 1700000000000
+}
+```
+
+### Test avec wscat
 
 ```bash
+# Installation
 npm install -g wscat
 
 # Connexion au WebSocket
 wscat -c ws://localhost:8080/ws/echo
+
+# Envoyer un message
+> {"text":"Hello","sender":"Player1"}
+
+# Le serveur répond avec l'écho
+< {"id":1,"text":"Hello","sender":"Player1"}
 ```
 
-Vous verrez alors passer des messages `"tick"`.
+### Cas d'usage de la WebSocket
 
-## 3. Lancer le projet
+- 💬 **Chat en direct** entre joueurs
+- 📊 **Notifications** de parties en cours
+- 🔔 **Alertes** de nouveaux records
+- 👥 **Liste** des joueurs connectés en temps réel
+- 🎮 **Synchronisation** multi-joueurs
 
-### 3.1. Prérequis
+---
 
-- JDK 11+
-- sbt (1.8+ recommandé)
+## 📖 Validation du dictionnaire
 
-### 3.2. Démarrer le serveur
+Le projet utilise le **dictionnaire français Gutenberg** contenant **336 527 mots**.
 
-Depuis la racine du projet :
+### Source
+
+- **Projet** : [OpenLexicon](https://github.com/chrplr/openlexicon)
+- **Fichier** : `liste.de.mots.francais.frgut.txt`
+- **Licence** : Open source
+
+### Chargement
+
+```scala
+private lazy val frenchWords: Set[String] = {
+  val source = Source.fromResource("french-words.txt")
+  try {
+    source.getLines().map(_.toLowerCase.trim).toSet
+  } finally {
+    source.close()
+  }
+}
+```
+
+Le dictionnaire est chargé **une seule fois** au premier appel (lazy) et reste en mémoire pour toute la durée de vie de l'application.
+
+---
+
+## 🚀 Installation et lancement
+
+### Prérequis
+
+- **Java 11+** (recommandé : Java 17)
+- **SBT 1.9.8+**
+
+### Installation
 
 ```bash
+# Cloner le projet
+git clone <url-du-repo>
+cd scala-http-kc
+
+# Compiler
+sbt compile
+```
+
+### Lancement
+
+```bash
+# Démarrer le serveur
 sbt run
 ```
 
-Le serveur démarre sur :
+Le serveur démarre sur **http://localhost:8080**
 
-- REST : `http://localhost:8080/api/messages`
-- WS   : `ws://localhost:8080/ws/echo`
-
-Pour arrêter le serveur : `Ctrl + C`.
-
-## 4. Tests manuels effectués
-
-Voici les commandes utilisées pour tester le projet.
-
-### 4.1. API REST
-
-1. Lister les messages (au démarrage, liste vide)
-
-```bash
-curl -i http://localhost:8080/api/messages
+```
+📚 Dictionnaire français chargé : 336527 mots (Gutenberg)
+✅ Serveur TUSMO démarré sur http://localhost:8080
+   🎯 Jeu TUSMO : http://localhost:8080
+   📝 API Game  : http://localhost:8080/api/game
+   📨 API Msg   : http://localhost:8080/api/messages
 ```
 
-2. Créer un message
+Pour arrêter le serveur : `Ctrl + C`
+
+### Tests
+
+#### Interface Web
+
+Ouvrir dans le navigateur : **http://localhost:8080**
+
+#### Tests API REST avec curl
 
 ```bash
-curl -i -X POST http://localhost:8080/api/messages   -H "Content-Type: application/json"   -d '{"content":"Hello http4s"}'
+# Créer une nouvelle partie
+curl -X POST http://localhost:8080/api/game/new
+
+# Récupérer l'état d'une partie
+curl http://localhost:8080/api/game/<GAME_ID>
+
+# Soumettre un mot
+curl -X POST http://localhost:8080/api/game/<GAME_ID>/guess \
+  -H "Content-Type: application/json" \
+  -d '{"word":"MAISON"}'
+
+# Lister les messages
+curl http://localhost:8080/api/messages
+
+# Créer un message
+curl -X POST http://localhost:8080/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Hello http4s"}'
+
+# Récupérer un message
+curl http://localhost:8080/api/messages/1
 ```
 
-3. Récupérer un message par id
+#### Test WebSocket
 
 ```bash
-curl -i http://localhost:8080/api/messages/1
-```
+# Installation de wscat
+npm install -g wscat
 
-4. Message inexistant
-
-```bash
-curl -i http://localhost:8080/api/messages/999
-```
-
-### 4.2. WebSocket
-
-Testé avec `wscat` :
-
-```bash
+# Connexion au WebSocket
 wscat -c ws://localhost:8080/ws/echo
+
+# Envoyer un message
+> {"text":"Test message","sender":"Player1"}
 ```
 
-- Le client reçoit périodiquement `"tick"`.
-- Les messages saisis dans `wscat` apparaissent dans la console du serveur.
+---
 
-## 5. Comment ce projet répond au sujet
+## 🎮 Comment jouer
 
-- Librairie utilisée côté Cats : http4s + cats-effect.
-- API REST :
-  - `GET /api/messages`
-  - `GET /api/messages/:id`
-  - `POST /api/messages`
-- Stockage :
-  - Structure en mémoire (`Ref[IO, Map[Long, Message]]`).
-- WebSocket :
-  - Endpoint bonus sur `ws://localhost:8080/ws/echo`.
-- Projet :
-  - Documenté via ce README.
-  - Testé manuellement (curl + wscat).
+1. Ouvrir **http://localhost:8080**
+2. Cliquer sur **"Nouvelle Partie"**
+3. Deviner le mot de **6 lettres** en **6 tentatives maximum**
+4. Utiliser les indices de couleur :
+   - 🟢 **Vert** : Lettre correcte à la bonne position
+   - 🟡 **Jaune** : Lettre présente mais mal placée
+   - ⚫ **Gris** : Lettre absente du mot
+
+**Règles** :
+
+- Le mot doit commencer par la **lettre indiquée** (indice)
+- Le mot doit **exister dans le dictionnaire français** (336k mots)
+- Seules les **lettres** sont acceptées (pas de chiffres/symboles)
+
+---
+
+## 📝 Logs
+
+Le serveur affiche des logs détaillés pour comprendre le flux :
+
+```
+[Tusmo] Nouvelle partie créée : 7d2f8a3c (mot: MAISON)
+[Tusmo] Mot reçu: PALIER
+[Tusmo] Mot normalisé: PALIER pour game 7d2f8a3c
+[Tusmo] Vérification du mot 'PALIER' dans dictionnaire local...
+[Dict] Vérification 'PALIER': ✓ VALIDE (local)
+[Tusmo] Mot 'PALIER' validé, évaluation...
+[Tusmo] Mot évalué, isWon=false, isLost=false
+```
+
+---
+
+## 🏆 Fonctionnalités
+
+### Jeu Tusmo
+
+- ✅ Jeu Tusmo complet (6 lettres, 6 tentatives)
+- ✅ Validation en temps réel avec 336k mots français
+- ✅ Interface web responsive et moderne
+- ✅ Indice de la première lettre
+- ✅ Révélation du mot en cas de défaite
+- ✅ Clavier virtuel AZERTY
+- ✅ Animations et feedback visuel
+
+### Architecture technique
+
+- ✅ API REST complète (GET, POST)
+- ✅ WebSocket pour communication temps réel
+- ✅ Gestion d'état fonctionnelle avec Cats Effect
+- ✅ Serveur de fichiers statiques
+- ✅ Middleware CORS
+- ✅ Stockage en mémoire sans base de données
+
+---
+
+## 📚 Architecture Cats Effect
+
+Le projet utilise le monad `IO` de Cats Effect pour gérer tous les effets de manière pure et fonctionnelle :
+
+```scala
+// Création d'un état partagé thread-safe
+gamesRef <- Ref.of[IO, Map[String, GameState]](Map.empty)
+
+// Modification atomique de l'état
+gamesRef.update(_ + (gameId -> newGame))
+
+// Lecture de l'état
+gamesRef.get.map(_.get(gameId))
+
+// Composition d'effets
+IO.println("Log") *>
+saveGame(game) *>
+Ok(response.asJson)
+```
+
+**Avantages** :
+
+- 🔒 **Thread-safe** : Gestion concurrente sécurisée
+- 🔄 **Composable** : Chaînage d'effets avec `*>`, `>>`, `flatMap`
+- 🎯 **Pure** : Séparation description/exécution
+- 🚀 **Performant** : Optimisations runtime
+
+---
+
+## ✅ Conformité au sujet
+
+Ce projet répond à toutes les exigences :
+
+### ✅ Serveur HTTP avec Cats
+
+- Framework : **http4s** + **Cats Effect**
+- Runtime : **IO monad** pour tous les effets
+
+### ✅ API REST (GET et POST)
+
+- **GET** :
+  - `/api/messages` - Liste des messages
+  - `/api/messages/:id` - Message spécifique
+  - `/api/game/:id` - État d'une partie
+- **POST** :
+  - `/api/messages` - Créer un message
+  - `/api/game/new` - Nouvelle partie
+  - `/api/game/:id/guess` - Soumettre une tentative
+
+### ✅ Stockage en mémoire (sans BDD)
+
+- `Ref[IO, Map[String, GameState]]` pour les parties Tusmo
+- `Ref[IO, Map[Long, Message]]` pour les messages
+- `Ref[IO, Long]` pour le compteur d'IDs
+
+### ✅ WebSocket (bonus)
+
+- Endpoint : `ws://localhost:8080/ws/echo`
+- Communication bidirectionnelle temps réel
+- Stockage des messages échangés
+
+### ✅ Documentation
+
+- README complet avec architecture détaillée
+- Explication de tous les composants
+- Diagrammes et exemples de code
+
+### ✅ Tests
+
+- Tests manuels avec curl
+- Tests WebSocket avec wscat
+- Interface web interactive
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues !
+
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/amélioration`)
+3. Commit les changements (`git commit -am 'Ajout fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/amélioration`)
+5. Créer une Pull Request
+
+---
+
+## 📄 Licence
+
+Ce projet est open source et disponible sous licence MIT.
+
+---
+
+## 🙏 Remerciements
+
+- **http4s** - Framework HTTP fonctionnel
+- **Cats Effect** - Gestion d'effets pure
+- **Projet Gutenberg** - Dictionnaire français
+- **OpenLexicon** - Base de données linguistique
+
+---
+
+**Développé avec ❤️ en Scala fonctionnel**
