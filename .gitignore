@@ -1,0 +1,20 @@
+# Metals (Scala IDE)
+.metals/
+.bloop/
+.bsp/
+metals.sbt
+
+# SBT
+target/
+project/target/
+project/project/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
