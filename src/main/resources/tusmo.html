@@ -718,7 +718,7 @@
 
     <script>
         const API_URL = 'http://localhost:8080/api/game';
-        const STATS_URL = 'http://localhost:8080/api/stats';
+        const STATS_URL = 'http://localhost:8080/api/game/stats';
         let currentGame = null;
         let currentRow = 0;
         let currentInput = '';
@@ -928,14 +928,13 @@
                         showConfetti();
                         showMessage(`🎉 Bravo ! Mot trouvé en ${currentGame.attempts.length} essai(s) !`, 'success');
                         
-                        // Recharger les stats après 200ms
-                        setTimeout(async () => {
-                            await loadStats();
-                            // Lancer nouvelle partie après 2 secondes
-                            setTimeout(() => {
-                                startNewGame();
-                            }, 2000);
-                        }, 200);
+                        // Recharger les stats immédiatement après la victoire
+                        await loadStats();
+                        
+                        // Lancer nouvelle partie après 3 secondes pour voir le score
+                        setTimeout(() => {
+                            startNewGame();
+                        }, 3000);
                     } else if (currentGame.isLost) {
                         // Défaite : afficher modal
                         setTimeout(async () => {

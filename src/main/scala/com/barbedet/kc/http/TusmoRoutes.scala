@@ -145,6 +145,14 @@ class TusmoRoutes(
         resp <- Ok(GameState.toPublic(game).asJson)
       } yield resp
 
+    // GET /stats - Obtenir les statistiques du joueur (AVANT /:gameId pour éviter conflit)
+    case GET -> Root / "stats" =>
+      for {
+        stats <- statsRef.get
+        _ <- IO.println(s"[Tusmo] Stats demandées: streak=${stats.currentStreak}, best=${stats.bestStreak}")
+        resp <- Ok(stats.asJson)
+      } yield resp
+
     // GET /game/:id - État de la partie
     case GET -> Root / gameId =>
       for {
@@ -200,14 +208,6 @@ class TusmoRoutes(
             IO.println(s"[Tusmo] Game $gameId introuvable") *>
             NotFound(Map("error" -> s"Partie $gameId introuvable").asJson)
         }
-      } yield resp
-
-    // GET /stats - Obtenir les statistiques du joueur
-    case GET -> Root / "stats" =>
-      for {
-        stats <- statsRef.get
-        _ <- IO.println(s"[Tusmo] Stats demandées: streak=${stats.currentStreak}, best=${stats.bestStreak}")
-        resp <- Ok(stats.asJson)
       } yield resp
   }
 

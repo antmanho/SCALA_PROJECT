@@ -61,7 +61,7 @@ object Main extends IOApp {
           IO.println("   🎯 Jeu TUSMO : http://localhost:8080") >>
           IO.println("   📝 API Game  : http://localhost:8080/api/game") >>
           IO.println("   📨 API Msg   : http://localhost:8080/api/messages") >>
-          IO.println("   🔥 Stats     : http://localhost:8080/api/stats") >>
+          IO.println("   🔥 Stats     : http://localhost:8080/api/game/stats") >>
           IO.never
         }
     } yield ExitCode.Success
