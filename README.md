@@ -4,13 +4,83 @@ Un clone du jeu **Tusmo** (version française de Wordle) développé en Scala av
 
 > Ce projet implémente un serveur HTTP en Scala avec Cats Effect incluant :
 >
-> - ✅ API REST complète (GET, POST)
-> - ✅ WebSocket pour communication temps réel
-> - ✅ Stockage en mémoire (sans base de données)
-> - ✅ Jeu Tusmo avec validation de 336k mots français
+> **Logique métier** :
 
-## 📋 Table des matières
+- **Sélection aléatoire** d'un mot français de 6 lettres
+- **Validation** des tentatives (longueur, première lettre, existence dans le dictionnaire)
+- **Évaluation** des lettres (Correct ✅ / Présent 🟡 / Absent ❌)
+- **Gestion de l'état** (victoire, défaite après 6 tentatives)
+- **Révélation du mot** en cas de défaite
+- **Statistiques** : Suivi des séries de victoires (current/best streak)PI REST complète (GET, POST)
+  > - ✅ WebSocket pour communication temps réel
+  > - ✅ Stockage en mémoire (sans base de données)
+  > - ✅ Jeu Tusmo avec validation de 336k mots français
+  > - ✅ Système de statistiques avec séries de victoires
 
+## 🎯 Règles du jeu
+
+**Tusmo** est un jeu de déduction de mots inspiré de Wordle, adapté pour le français.
+
+### Objectif
+
+Deviner un **mot de 6 lettres** en **6 tentatives maximum**.
+
+### Comment jouer
+
+1. **Indice initial** : La première lettre du mot à deviner vous est donnée
+2. **Proposez un mot** : Entrez un mot de 6 lettres commençant par la lettre indiquée
+3. **Analysez les couleurs** : Après chaque tentative, les lettres sont colorées selon leur état :
+   - � **VERT** (Correct) : La lettre est **correcte** et **bien placée**
+   - 🟡 **JAUNE** (Présent) : La lettre est **dans le mot** mais **mal placée**
+   - ⚫ **GRIS** (Absent) : La lettre **n'est pas** dans le mot
+4. **Ajustez votre stratégie** : Utilisez les indices pour trouver le mot en 6 essais
+
+### Exemple de partie
+
+**Mot à deviner** : `MOUTON` (première lettre : **M**)
+
+| Essai | Mot proposé | Résultat        |
+| ----- | ----------- | --------------- |
+| 1     | `MAISON`    | 🟢⚫⚫⚫🟡🟡    |
+| 2     | `MOULIN`    | 🟢🟢🟢⚫⚫🟡    |
+| 3     | `MOUTON`    | 🟢🟢🟢🟢🟢🟢 ✅ |
+
+**Analyse** :
+
+- Essai 1 : `M` est bien placé (vert), `O` et `N` sont dans le mot mais mal placés (jaune)
+- Essai 2 : `M`, `O`, `U` sont bien placés (vert), `N` est toujours mal placé (jaune)
+- Essai 3 : **Victoire !** Toutes les lettres sont correctes
+
+### Contraintes
+
+- ✅ Le mot doit contenir **exactement 6 lettres**
+- ✅ Le mot doit **commencer par la lettre indiquée**
+- ✅ Le mot doit **exister dans le dictionnaire français** (336 527 mots validés)
+- ✅ Uniquement des **lettres** (pas de chiffres, espaces ou caractères spéciaux)
+
+### Système de statistiques
+
+Le jeu inclut un système de suivi de performance :
+
+- 🔥 **Série actuelle** : Nombre de victoires consécutives
+- 🏆 **Meilleur score** : Record personnel de victoires d'affilée
+- Les statistiques sont réinitialisées après une défaite
+- Les stats persistent pendant toute la session du serveur
+
+### Victoire et défaite
+
+- ✅ **Victoire** : Vous trouvez le mot en 6 essais ou moins
+  - Animation de confettis 🎉
+  - Mise à jour automatique des statistiques
+  - Nouvelle partie lancée après 3 secondes
+- ❌ **Défaite** : Vous épuisez vos 6 essais sans trouver le mot
+  - Le mot correct est révélé
+  - La série de victoires est remise à zéro
+  - Possibilité de rejouer immédiatement
+
+## �📋 Table des matières
+
+- [Règles du jeu](#-règles-du-jeu)
 - [Architecture](#architecture)
 - [Technologies](#technologies)
 - [Structure du projet](#structure-du-projet)
@@ -170,6 +240,7 @@ Router(
 | `POST`  | `/api/game/new`       | Crée une nouvelle partie avec un mot aléatoire |
 | `GET`   | `/api/game/:id`       | Récupère l'état d'une partie existante         |
 | `POST`  | `/api/game/:id/guess` | Soumet une tentative et obtient l'évaluation   |
+| `GET`   | `/api/game/stats`     | Récupère les statistiques du joueur            |
 
 **Logique métier** :
 
@@ -388,6 +459,18 @@ Response 200:
   "isWon": false,
   "isLost": false,
   "revealedWord": "MOUTON"  // Seulement si isLost = true
+}
+```
+
+#### Obtenir les statistiques
+
+```http
+GET /api/game/stats
+
+Response 200:
+{
+  "currentStreak": 5,
+  "bestStreak": 12
 }
 ```
 
@@ -610,6 +693,9 @@ curl -X POST http://localhost:8080/api/game/<GAME_ID>/guess \
   -H "Content-Type: application/json" \
   -d '{"word":"MAISON"}'
 
+# Obtenir les statistiques
+curl http://localhost:8080/api/game/stats
+
 # Lister les messages
 curl http://localhost:8080/api/messages
 
@@ -637,21 +723,58 @@ wscat -c ws://localhost:8080/ws/echo
 
 ---
 
-## 🎮 Comment jouer
+## 🎮 Guide de démarrage rapide
 
-1. Ouvrir **http://localhost:8080**
-2. Cliquer sur **"Nouvelle Partie"**
-3. Deviner le mot de **6 lettres** en **6 tentatives maximum**
-4. Utiliser les indices de couleur :
-   - 🟢 **Vert** : Lettre correcte à la bonne position
-   - 🟡 **Jaune** : Lettre présente mais mal placée
-   - ⚫ **Gris** : Lettre absente du mot
+### Lancer une partie
 
-**Règles** :
+1. **Démarrer le serveur** : `sbt run`
+2. **Ouvrir le navigateur** : http://localhost:8080
+3. Le jeu démarre automatiquement avec un mot aléatoire
 
-- Le mot doit commencer par la **lettre indiquée** (indice)
-- Le mot doit **exister dans le dictionnaire français** (336k mots)
-- Seules les **lettres** sont acceptées (pas de chiffres/symboles)
+### Interface du jeu
+
+```
+┌─────────────────────────────────────────────┐
+│  🔥 5    Meilleur: 12       🎯 TUSMO        │
+│                                             │
+│  📊 Statistiques            Essais: 2/6     │
+│  🔥 Série actuelle: 5       Longueur: 6     │
+│  🏆 Meilleur score: 12                      │
+│                                             │
+│  Première lettre: M                         │
+│                                             │
+│  ┌──┬──┬──┬──┬──┬──┐                       │
+│  │M │A │I │S │O │N │  (Essai 1)            │
+│  └──┴──┴──┴──┴──┴──┘                       │
+│  🟢 ⚫ ⚫ ⚫ 🟡 🟡                            │
+│                                             │
+│  ┌──┬──┬──┬──┬──┬──┐                       │
+│  │M │O │U │L │I │N │  (Essai 2)            │
+│  └──┴──┴──┴──┴──┴──┘                       │
+│  🟢 🟢 🟢 ⚫ ⚫ 🟡                            │
+│                                             │
+│  [Votre mot...] [Valider]                  │
+│                                             │
+│  Clavier virtuel AZERTY                     │
+└─────────────────────────────────────────────┘
+```
+
+### Stratégie gagnante
+
+1. **Premier essai** : Utilisez un mot avec des lettres courantes (A, E, I, O, U, R, S, T, N)
+2. **Analysez les indices** : Notez les lettres vertes (bien placées) et jaunes (mal placées)
+3. **Éliminez** : Ignorez les lettres grises dans vos prochains essais
+4. **Affinez** : Repositionnez les lettres jaunes et conservez les vertes
+5. **Validez** : Seuls les mots du dictionnaire français sont acceptés
+
+### Fonctionnalités
+
+- 🎯 **Grille interactive** : Visualisation claire de vos essais
+- ⌨️ **Clavier virtuel** : Clavier AZERTY avec états des lettres
+- 📊 **Statistiques en temps réel** : Suivez votre série de victoires
+- 🎉 **Animations** : Confettis lors des victoires
+- 🔄 **Nouvelle partie auto** : Lance automatiquement un nouveau défi après victoire
+- 📱 **Responsive** : Jouable sur mobile, tablette et desktop
 
 ---
 
@@ -680,8 +803,10 @@ Le serveur affiche des logs détaillés pour comprendre le flux :
 - ✅ Interface web responsive et moderne
 - ✅ Indice de la première lettre
 - ✅ Révélation du mot en cas de défaite
-- ✅ Clavier virtuel AZERTY
-- ✅ Animations et feedback visuel
+- ✅ Clavier virtuel AZERTY avec états des touches
+- ✅ Animations et feedback visuel (confettis, transitions)
+- ✅ Système de statistiques (série actuelle, meilleur score)
+- ✅ Nouvelle partie automatique après victoire
 
 ### Architecture technique
 
