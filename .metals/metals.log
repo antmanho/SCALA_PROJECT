@@ -1,0 +1,19 @@
+2025.11.20 02:13:17 INFO  Started: Metals version 1.6.3 in folders '/Users/anthony/Desktop/scala-http-kc' for client Visual Studio Code 1.104.2.
+2025.11.20 02:13:18 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+nov. 20, 2025 2:13:24 AM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFOS: Unsupported notification method: $/setTrace
+2025.11.20 02:17:31 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:17:32 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/model/Game.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:19:08 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/Main.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:19:08 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/Main.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:19:08 WARN  no build target for: /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/Main.scala
+2025.11.20 02:23:32 INFO  Started: Metals version 1.6.3 in folders '/Users/anthony/Desktop/scala-http-kc' for client Visual Studio Code 1.104.2.
+2025.11.20 02:23:32 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+2025.11.20 02:25:24 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:25:25 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:25:25 WARN  no build target for: /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala
+2025.11.20 02:25:32 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala. Using presentation compiler with project's scala-library version: 3.3.6
+2025.11.20 02:25:32 WARN  no build target for: /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala
+2025.11.20 02:25:32 INFO  no build target found for /Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala. Using presentation compiler with project's scala-library version: 3.3.6
+nov. 20, 2025 2:28:27 AM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFOS: Unsupported notification method: $/setTrace

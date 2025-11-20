@@ -17,9 +17,11 @@ import scala.util.Random
  *   - POST /game/new    : Démarrer une nouvelle partie
  *   - POST /game/:id/guess : Soumettre un mot
  *   - GET  /game/:id    : Obtenir l'état de la partie
+ *   - GET  /stats       : Obtenir les statistiques du joueur
  */
 class TusmoRoutes(
-    gamesRef: Ref[IO, Map[String, GameState]]
+    gamesRef: Ref[IO, Map[String, GameState]],
+    statsRef: Ref[IO, PlayerStats]
 ) extends Http4sDsl[IO] {
 
   // Liste de mots français de 6 lettres pour le jeu
@@ -143,6 +145,14 @@ class TusmoRoutes(
         resp <- Ok(GameState.toPublic(game).asJson)
       } yield resp
 
+    // GET /stats - Obtenir les statistiques du joueur (AVANT /:gameId pour éviter conflit)
+    case GET -> Root / "stats" =>
+      for {
+        stats <- statsRef.get
+        _ <- IO.println(s"[Tusmo] Stats demandées: streak=${stats.currentStreak}, best=${stats.bestStreak}")
+        resp <- Ok(stats.asJson)
+      } yield resp
+
     // GET /game/:id - État de la partie
     case GET -> Root / gameId =>
       for {
@@ -216,7 +226,19 @@ class TusmoRoutes(
       isLost = isLost
     )
     
+    // Mettre à jour les statistiques en fonction du résultat
+    val updateStats = if (isWon) {
+      statsRef.update(PlayerStats.recordWin) *>
+      IO.println(s"[Tusmo] 🔥 Victoire ! Série mise à jour")
+    } else if (isLost) {
+      statsRef.update(PlayerStats.recordLoss) *>
+      IO.println(s"[Tusmo] 💔 Défaite... Série remise à 0")
+    } else {
+      IO.unit
+    }
+    
     IO.println(s"[Tusmo] Mot évalué, isWon=$isWon, isLost=$isLost") *>
+    updateStats *>
     gamesRef.update(_ + (gameId -> updatedGame)) *>
     Ok(GameState.toPublic(updatedGame).asJson)
   }

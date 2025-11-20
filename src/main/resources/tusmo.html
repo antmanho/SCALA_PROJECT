@@ -75,7 +75,110 @@
             filter: brightness(1.1);
         }
 
+        .stats-container {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.7em;
+        }
+
+        .streak-display {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .streak-number {
+            font-size: 1.1em;
+            color: #ff6b35;
+        }
+
+        .best-streak {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .main-content {
+            display: flex;
+            width: 100%;
+            max-width: 900px;
+            gap: 20px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .stats-panel {
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            background: var(--surface);
+            border-radius: 10px;
+            height: fit-content;
+            position: sticky;
+            top: 10px;
+        }
+
+        .stats-panel h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: var(--background);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-item.current {
+            border-color: #ff6b35;
+        }
+
+        .stat-item.best {
+            border-color: #ffd700;
+        }
+
+        .stat-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .stat-item.current .stat-value {
+            color: #ff6b35;
+        }
+
+        .stat-item.best .stat-value {
+            color: #ffd700;
+        }
+
         .container {
+            flex: 1;
             max-width: 500px;
             width: 100%;
             padding: 8px;
@@ -83,8 +186,6 @@
             flex-direction: column;
             align-items: center;
             gap: 5px;
-            flex: 1;
-            overflow-y: auto;
         }
 
         .game-info {
@@ -119,6 +220,20 @@
             border-radius: 5px;
             font-weight: 600;
             font-size: 0.75em;
+        }
+
+        .debug-answer {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px dashed #ff0000;
+            color: #ff6666;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 8px 0;
+            letter-spacing: 8px;
         }
 
         .game-board {
@@ -379,6 +494,23 @@
             }
         }
 
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            top: -10px;
+            z-index: 9999;
+            animation: confetti-fall 3s linear forwards;
+            pointer-events: none;
+        }
+
         .modal h2 {
             font-size: 2em;
             margin-bottom: 20px;
@@ -401,6 +533,24 @@
         .modal button {
             margin-top: 20px;
             width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .stats-panel {
+                width: 100%;
+                max-width: 500px;
+                flex-direction: row;
+                justify-content: space-around;
+            }
+
+            .stat-item {
+                flex: 1;
+            }
         }
 
         @media (max-width: 600px) {
@@ -429,11 +579,31 @@
                 padding: 5px;
                 gap: 3px;
             }
+
+            .stats-panel {
+                padding: 10px;
+            }
+
+            .stat-value {
+                font-size: 2em;
+            }
+
+            .stat-icon {
+                font-size: 1.5em;
+            }
         }
     </style>
 </head>
 <body>
     <header>
+        <div class="stats-container">
+            <div class="streak-display">
+                🔥 <span class="streak-number" id="currentStreak">0</span>
+            </div>
+            <div class="best-streak">
+                Meilleur: <span id="bestStreak">0</span>
+            </div>
+        </div>
         <h1>🎯 TUSMO</h1>
         <p class="subtitle">Devinez le mot en 6 essais maximum</p>
         <button class="header-btn" onclick="startNewGame()">
@@ -441,21 +611,41 @@
         </button>
     </header>
 
-    <div class="container">
-        <div class="game-info">
-            <div class="info-item">
-                <div class="info-label">Essais</div>
-                <div class="info-value" id="attempts">0/6</div>
+    <div class="main-content">
+        <!-- Panneau des statistiques -->
+        <div class="stats-panel">
+            <h2>📊 Statistiques</h2>
+            
+            <div class="stat-item current">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-label">Série actuelle</div>
+                <div class="stat-value" id="currentStreakBig">0</div>
             </div>
-            <div class="info-item">
-                <div class="info-label">Longueur</div>
-                <div class="info-value" id="wordLength">-</div>
+
+            <div class="stat-item best">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-label">Meilleur score</div>
+                <div class="stat-value" id="bestStreakBig">0</div>
             </div>
         </div>
+
+        <div class="container">
+            <div class="game-info">
+                <div class="info-item">
+                    <div class="info-label">Essais</div>
+                    <div class="info-value" id="attempts">0/6</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Longueur</div>
+                    <div class="info-value" id="wordLength">-</div>
+                </div>
+            </div>
 
         <div class="hint" id="hint">
             Première lettre : <strong>-</strong>
         </div>
+
+        <div class="debug-answer" id="debugAnswer">🔍 DEBUG: <strong>------</strong></div>
 
         <div id="message"></div>
 
@@ -512,6 +702,7 @@
                 <div class="key wide" onclick="typeKey('BACKSPACE')">⌫</div>
             </div>
         </div>
+        </div>
     </div>
 
     <div class="modal" id="endModal">
@@ -527,6 +718,7 @@
 
     <script>
         const API_URL = 'http://localhost:8080/api/game';
+        const STATS_URL = 'http://localhost:8080/api/game/stats';
         let currentGame = null;
         let currentRow = 0;
         let currentInput = '';
@@ -534,6 +726,7 @@
 
         // Initialiser au chargement
         document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
             startNewGame();
             
             // Gérer le clavier physique - seulement pour Enter
@@ -544,6 +737,34 @@
                 }
             });
         });
+
+        // Charger les statistiques
+        async function loadStats() {
+            try {
+                console.log('🔄 Chargement des stats depuis:', STATS_URL);
+                const response = await fetch(STATS_URL);
+                if (response.ok) {
+                    const stats = await response.json();
+                    console.log('✅ Stats reçues du serveur:', stats);
+                    updateStatsDisplay(stats);
+                } else {
+                    console.error('❌ Erreur HTTP:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement des stats:', error);
+            }
+        }
+
+        // Mettre à jour l'affichage des stats
+        function updateStatsDisplay(stats) {
+            console.log('📊 Mise à jour des stats:', stats);
+            // Header (petit affichage)
+            document.getElementById('currentStreak').textContent = stats.currentStreak;
+            document.getElementById('bestStreak').textContent = stats.bestStreak;
+            // Panneau (grand affichage)
+            document.getElementById('currentStreakBig').textContent = stats.currentStreak;
+            document.getElementById('bestStreakBig').textContent = stats.bestStreak;
+        }
 
         function typeKey(key) {
             const input = document.getElementById('wordInput');
@@ -619,6 +840,11 @@
             document.getElementById('wordLength').textContent = currentGame.wordLength;
             document.getElementById('hint').innerHTML = 
                 `Première lettre : <strong>${currentGame.firstLetter}</strong>`;
+            
+            // Afficher la réponse pour les tests (si disponible en mode debug)
+            const debugWord = currentGame.debugWord || currentGame.revealedWord || '------';
+            document.getElementById('debugAnswer').innerHTML = 
+                `🔍 DEBUG: <strong>${debugWord}</strong>`;
         }
 
         function displayAttempt(attempt, rowIndex) {
@@ -696,10 +922,25 @@
                     createGameBoard();
                     clearMessage();
 
+                    // Gérer victoire ou défaite
                     if (currentGame.isWon) {
-                        showEndModal(true);
+                        // Victoire : confettis + rechargement stats + nouvelle partie auto
+                        showConfetti();
+                        showMessage(`🎉 Bravo ! Mot trouvé en ${currentGame.attempts.length} essai(s) !`, 'success');
+                        
+                        // Recharger les stats immédiatement après la victoire
+                        await loadStats();
+                        
+                        // Lancer nouvelle partie après 3 secondes pour voir le score
+                        setTimeout(() => {
+                            startNewGame();
+                        }, 3000);
                     } else if (currentGame.isLost) {
-                        showEndModal(false);
+                        // Défaite : afficher modal
+                        setTimeout(async () => {
+                            await loadStats();
+                            showEndModal(false);
+                        }, 200);
                     }
                 } else {
                     const error = await response.json();
@@ -709,6 +950,30 @@
             } catch (error) {
                 console.error('Erreur:', error);
                 showMessage('Erreur de connexion au serveur', 'error');
+            }
+        }
+
+        function showConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+            const confettiCount = 100;
+
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = confetti.style.width;
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 4000);
+                }, i * 30);
             }
         }
 

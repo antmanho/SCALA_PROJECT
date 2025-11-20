@@ -1,4 +1,4 @@
-[0m[[0m[33mwarn[0m] [0m[0m/Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala:124:24: Implicit definition should have explicit type (inferred org.http4s.EntityDecoder[cats.effect.IO,com.barbedet.kc.model.GuessRequest]) [quickfixable][0m
+[0m[[0m[33mwarn[0m] [0m[0m/Users/anthony/Desktop/scala-http-kc/src/main/scala/com/barbedet/kc/http/TusmoRoutes.scala:126:24: Implicit definition should have explicit type (inferred org.http4s.EntityDecoder[cats.effect.IO,com.barbedet.kc.model.GuessRequest]) [quickfixable][0m
 [0m[[0m[33mwarn[0m] [0m[0m  implicit private val guessRequestDecoder = jsonOf[IO, GuessRequest][0m
 [0m[[0m[33mwarn[0m] [0m[0m                       ^[0m
 [0m[[0m[33mwarn[0m] [0m[0mone warning found[0m
